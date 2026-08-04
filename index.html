@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Movies Catalog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0a08;
+    --bg-raised:#151209;
+    --card:#181410;
+    --card-edge:#26201a;
+    --text:#f2ecdd;
+    --text-muted:#9c9082;
+    --gold:#d4a537;
+    --imdb:#f5c518;
+    --lb-orange:#ff8000;
+    --lb-green:#00e054;
+    --lb-blue:#40bcf4;
+    --stub-shadow: rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(212,165,55,.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Sprocket marquee header ---------- */
+  .sprocket-strip{
+    height:14px;
+    background-image: radial-gradient(circle, var(--bg) 3.5px, transparent 3.6px);
+    background-size: 26px 14px;
+    background-position: 13px 0;
+    background-color:#000;
+  }
+
+  header{
+    background:#000;
+    padding:38px 24px 30px;
+    text-align:center;
+    border-bottom:1px solid var(--card-edge);
+  }
+  .marquee-title{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(2.6rem, 6vw, 4.6rem);
+    letter-spacing:.06em;
+    line-height:1;
+    color:var(--text);
+    margin:0;
+    text-shadow: 0 0 18px rgba(212,165,55,.35);
+  }
+  .marquee-title span{color:var(--gold);}
+  .marquee-sub{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.72rem;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-top:10px;
+  }
+
+  /* ---------- Box office control bar ---------- */
+  .controls{
+    max-width:1180px;
+    margin:-24px auto 0;
+    padding:0 24px;
+    position:relative;
+    z-index:2;
+  }
+  .box-office{
+    background:var(--bg-raised);
+    border:1px solid var(--card-edge);
+    border-radius:10px;
+    padding:16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:center;
+    box-shadow:0 12px 30px rgba(0,0,0,.45);
+  }
+  .box-office input[type="text"],
+  .box-office select{
+    background:#0f0d09;
+    border:1px solid var(--card-edge);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:.9rem;
+    padding:10px 14px;
+    border-radius:6px;
+    outline:none;
+  }
+  .box-office input[type="text"]{flex:1 1 240px;}
+  .box-office input[type="text"]::placeholder{color:var(--text-muted);}
+  .box-office select{flex:0 1 170px; cursor:pointer;}
+  .box-office input:focus, .box-office select:focus{border-color:var(--gold);}
+
+  .count-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.75rem;
+    color:var(--text-muted);
+    padding:0 4px;
+    white-space:nowrap;
+  }
+
+  /* ---------- Grid ---------- */
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:34px 24px 60px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+    gap:26px;
+  }
+
+  /* ---------- Ticket-stub card ---------- */
+  .ticket{
+    background:var(--card);
+    border:1px solid var(--card-edge);
+    border-radius:10px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    cursor:pointer;
+  }
+  .ticket:hover{
+    transform:translateY(-4px);
+    border-color:var(--gold);
+    box-shadow:0 16px 34px var(--stub-shadow);
+  }
+  .ticket:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:2px;
+  }
+
+  .poster{
+    position:relative;
+    aspect-ratio:2/3;
+    background:linear-gradient(155deg, #23200d, #151109);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .poster .glyph{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:2.6rem;
+    color:rgba(242,236,221,.14);
+    letter-spacing:.05em;
+    text-align:center;
+    padding:0 10px;
+  }
+  .poster .year-badge{
+    position:absolute;
+    top:10px;
+    left:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.68rem;
+    background:rgba(0,0,0,.55);
+    padding:3px 8px;
+    border-radius:20px;
+    color:var(--text-muted);
+    letter-spacing:.04em;
+  }
+
+  /* perforation divider — the ticket tear line */
+  .perforation{
+    height:0;
+    border-top:2px dashed var(--card-edge);
+    position:relative;
+    margin:0 14px;
+  }
+  .perforation::before,.perforation::after{
+    content:"";
+    position:absolute;
+    top:-7px;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:var(--bg);
+    border:1px solid var(--card-edge);
+  }
+  .perforation::before{left:-21px;}
+  .perforation::after{right:-21px;}
+
+  .info{
+    padding:14px 16px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    flex:1;
+  }
+  .title-row h3{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.32rem;
+    letter-spacing:.02em;
+    margin:0;
+    line-height:1.05;
+  }
+  .genre-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.66rem;
+    color:var(--text-muted);
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    margin-top:3px;
+  }
+
+  .ratings{
+    display:flex;
+    gap:8px;
+    margin-top:auto;
+  }
+  .badge{
+    flex:1;
+    border-radius:6px;
+    padding:6px 8px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:2px;
+  }
+  .badge.imdb{
+    background:rgba(245,197,24,.08);
+    border:1px solid rgba(245,197,24,.35);
+  }
+  .badge.imdb .label{color:var(--imdb);}
+  .badge.lb{
+    background:rgba(255,128,0,.06);
+    border:1px solid rgba(255,128,0,.28);
+  }
+  .badge .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.62rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+  .badge .value{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:1rem;
+  }
+  .lb-dots{
+    display:flex;
+    gap:2px;
+    margin-top:1px;
+  }
+  .lb-dots .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--card-edge);
+  }
+  .lb-dots .dot.on{background:var(--lb-green);}
+  .lb-dots .dot.half{
+    background:linear-gradient(90deg, var(--lb-green) 50%, var(--card-edge) 50%);
+  }
+
+  .empty-state{
+    grid-column:1/-1;
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+    font-family:'JetBrains Mono',monospace;
+    font-size:.85rem;
+  }
+
+  footer{
+    text-align:center;
+    padding:24px;
+    color:var(--text-muted);
+    font-family:'JetBrains Mono',monospace;
+    font-size:.68rem;
+    letter-spacing:.06em;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ticket{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="sprocket-strip"></div>
+<header>
+  <h1 class="marquee-title">NTC <span>Movies Catalog</span></h1>
+  <div class="marquee-sub">A catalog of movies in IMDb &amp; Letterboxd scores</div>
+</header>
+<div class="sprocket-strip"></div>
+
+<div class="controls">
+  <div class="box-office">
+    <input type="text" id="searchInput" placeholder="Search by title…">
+    <select id="genreFilter">
+      <option value="all">All genres</option>
+    </select>
+    <select id="sortSelect">
+      <option value="title-asc">Title A–Z</option>
+      <option value="year-desc">Newest first</option>
+      <option value="year-asc">Oldest first</option>
+      <option value="imdb-desc">IMDb: high to low</option>
+      <option value="lb-desc">Letterboxd: high to low</option>
+    </select>
+    <span class="count-tag" id="countTag">— titles</span>
+  </div>
+</div>
+
+<main>
+  <div class="grid" id="movieGrid"></div>
+</main>
+
+<footer>RATINGS ARE ILLUSTRATIVE SAMPLE DATA · REPLACE WITH LIVE VALUES FOR PRODUCTION USE</footer>
+
+<script>
+  // ---- Sample catalog data ----
+  // imdb: 0-10 scale · letterboxd: 0-5 scale
+  const movies = [
+    { title:"Parasite", year:2019, genre:"Thriller", imdb:8.5, lb:4.6 },
+    { title:"Everything Everywhere All at Once", year:2022, genre:"Sci-Fi", imdb:7.8, lb:4.3 },
+    { title:"The Dark Knight", year:2008, genre:"Action", imdb:9.0, lb:4.4 },
+    { title:"Whiplash", year:2014, genre:"Drama", imdb:8.5, lb:4.4 },
+    { title:"Spirited Away", year:2001, genre:"Animation", imdb:8.6, lb:4.5 },
+    { title:"La La Land", year:2016, genre:"Musical", imdb:8.0, lb:4.1 },
+    { title:"Get Out", year:2017, genre:"Horror", imdb:7.7, lb:3.9 },
+    { title:"Interstellar", year:2014, genre:"Sci-Fi", imdb:8.7, lb:4.4 },
+    { title:"Portrait of a Lady on Fire", year:2019, genre:"Drama", imdb:8.1, lb:4.4 },
+    { title:"Mad Max: Fury Road", year:2015, genre:"Action", imdb:8.1, lb:4.2 },
+    { title:"Knives Out", year:2019, genre:"Mystery", imdb:7.9, lb:3.9 },
+    { title:"Moonlight", year:2016, genre:"Drama", imdb:7.4, lb:4.1 },
+    { title:"The Grand Budapest Hotel", year:2014, genre:"Comedy", imdb:8.1, lb:4.3 },
+    { title:"Dune", year:2021, genre:"Sci-Fi", imdb:8.0, lb:4.0 },
+    { title:"Oldboy", year:2003, genre:"Thriller", imdb:8.4, lb:4.2 },
+    { title:"Coco", year:2017, genre:"Animation", imdb:8.4, lb:4.2 },
+    { title:"Nomadland", year:2020, genre:"Drama", imdb:7.4, lb:3.7 },
+    { title:"The Batman", year:2022, genre:"Action", imdb:7.8, lb:3.8 },
+    { title:"Barbie", year:2023, genre:"Comedy", imdb:6.9, lb:3.8 },
+    { title:"Oppenheimer", year:2023, genre:"Drama", imdb:8.3, lb:4.2 }
+  ];
+
+  const grid = document.getElementById('movieGrid');
+  const searchInput = document.getElementById('searchInput');
+  const genreFilter = document.getElementById('genreFilter');
+  const sortSelect = document.getElementById('sortSelect');
+  const countTag = document.getElementById('countTag');
+
+  // populate genre dropdown
+  const genres = [...new Set(movies.map(m => m.genre))].sort();
+  genres.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g;
+    opt.textContent = g;
+    genreFilter.appendChild(opt);
+  });
+
+  function lbDotsHTML(score){
+    // score 0-5, render 5 dots, half-fill supported
+    let html = '<div class="lb-dots">';
+    for(let i=1;i<=5;i++){
+      if(score >= i) html += '<span class="dot on"></span>';
+      else if(score >= i - 0.5) html += '<span class="dot half"></span>';
+      else html += '<span class="dot"></span>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function initials(title){
+    return title.split(' ').filter(w => w.length).slice(0,3).map(w => w[0]).join('');
+  }
+
+  function render(){
+    const query = searchInput.value.trim().toLowerCase();
+    const genre = genreFilter.value;
+    const sortBy = sortSelect.value;
+
+    let list = movies.filter(m => {
+      const matchesQuery = m.title.toLowerCase().includes(query);
+      const matchesGenre = genre === 'all' || m.genre === genre;
+      return matchesQuery && matchesGenre;
+    });
+
+    list.sort((a,b) => {
+      switch(sortBy){
+        case 'year-desc': return b.year - a.year;
+        case 'year-asc': return a.year - b.year;
+        case 'imdb-desc': return b.imdb - a.imdb;
+        case 'lb-desc': return b.lb - a.lb;
+        default: return a.title.localeCompare(b.title);
+      }
+    });
+
+    countTag.textContent = `${list.length} title${list.length === 1 ? '' : 's'}`;
+
+    if(list.length === 0){
+      grid.innerHTML = '<div class="empty-state">No titles match your search. Try another query or genre.</div>';
+      return;
+    }
+
+    grid.innerHTML = list.map(m => `
+      <article class="ticket" tabindex="0">
+        <div class="poster">
+          <span class="glyph">${initials(m.title)}</span>
+          <span class="year-badge">${m.year}</span>
+        </div>
+        <div class="perforation"></div>
+        <div class="info">
+          <div class="title-row">
+            <h3>${m.title}</h3>
+            <div class="genre-tag">${m.genre}</div>
+          </div>
+          <div class="ratings">
+            <div class="badge imdb">
+              <span class="label">IMDb</span>
+              <span class="value">${m.imdb.toFixed(1)}</span>
+            </div>
+            <div class="badge lb">
+              <span class="label">Letterboxd</span>
+              <span class="value">${m.lb.toFixed(1)}</span>
+              ${lbDotsHTML(m.lb)}
+            </div>
+          </div>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  searchInput.addEventListener('input', render);
+  genreFilter.addEventListener('change', render);
+  sortSelect.addEventListener('change', render);
+
+  render();
+</script>
+
+</body>
+</html>
